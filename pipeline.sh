@@ -1,31 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# — where this script lives
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="$SCRIPT_DIR/pipeline.log"
 
-# — start logging all stdout/stderr
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 echo "===== $(date) Starting pipeline ====="
 
-# — load environment variables (DOCKER_USER, DOCKER_PASS, GIT_TOKEN, etc.)
-if [[ -f "$SCRIPT_DIR/pipeline.env" ]]; then
-  set -o allexport
-  source "$SCRIPT_DIR/pipeline.env"
-  set +o allexport
-else
-  echo "⚠️  Warning: pipeline.env not found"
-fi
+# — no more sourcing pipeline.env; Docker passed your env vars already
 
-# — folder where repos will be cloned
 WORK_BASE="$SCRIPT_DIR/repos"
 mkdir -p "$WORK_BASE"
 
-# — read each line of pipeline.conf
 while IFS='|' read -r KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT; do
-  # skip empty lines or comments
   [[ -z "$KEY" || "${KEY:0:1}" == "#" ]] && continue
 
   echo
@@ -34,8 +22,10 @@ while IFS='|' read -r KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT; do
   REPO_DIR="$WORK_BASE/$KEY"
   rm -rf "$REPO_DIR"
 
-  echo "🔗 Cloning $GIT_URL into $REPO_DIR"
-  git clone "$GIT_URL" "$REPO_DIR"
+  # ← expand the variable in the URL so $GIT_TOKEN is replaced
+  CLONE_URL=$(eval "echo $GIT_URL")
+  echo "🔗 Cloning $CLONE_URL into $REPO_DIR"
+  git clone "$CLONE_URL" "$REPO_DIR"
 
   cd "$REPO_DIR"
 
