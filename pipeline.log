@@ -1,0 +1,146 @@
+===== Wed May 21 01:01:01 UTC 2025 Starting pipeline =====
+⚠️  Warning: pipeline.env not found
+
+⏳ Processing [MSFGet]
+🔗 Cloning https://$GIT_TOKEN@github.com/WebSurfinMurf/MSFGet.git into /pipeline-runner/repos/MSFGet
+Cloning into '/pipeline-runner/repos/MSFGet'...
+fatal: could not read Password for 'https://$GIT_TOKEN@github.com': No such device or address
+===== Wed May 21 02:21:57 UTC 2025 Starting pipeline =====
+
+⏳ Processing [MSFGet]
+🔗 Cloning MSFGet
+Cloning into '/pipeline-runner/repos/MSFGet'...
+🚧 Building image: websurfinmurf/msfget:latest
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 290B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11-slim
+#2 DONE 0.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/5] FROM docker.io/library/python:3.11-slim@sha256:9c85d1d49df54abca1c5db3b4016400e198e9e9bb699f32f1ef8e5c0c2149ccf
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.90MB 0.0s done
+#5 DONE 0.0s
+
+#6 [2/5] WORKDIR /app
+#6 CACHED
+
+#7 [3/5] COPY requirements.txt .
+#7 CACHED
+
+#8 [4/5] RUN pip install --no-cache-dir -r requirements.txt
+#8 CACHED
+
+#9 [5/5] COPY . .
+#9 DONE 0.0s
+
+#10 exporting to image
+#10 exporting layers 0.0s done
+#10 writing image sha256:24319498114ae780d6f80cdc9493a271e09d8c09de7865de2d753f1db7f9a21e done
+#10 naming to docker.io/websurfinmurf/msfget:latest done
+#10 DONE 0.0s
+🔐 Logging into Docker Hub
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+📤 Pushing image
+The push refers to repository [docker.io/websurfinmurf/msfget]
+2b515d1b8b17: Preparing
+80af3981a8b5: Preparing
+44e884b23519: Preparing
+b6220bf6a5d8: Preparing
+23aa89a8a424: Preparing
+91bd78b864ed: Preparing
+adb057d02f88: Preparing
+6c4c763d22d0: Preparing
+adb057d02f88: Waiting
+6c4c763d22d0: Waiting
+91bd78b864ed: Waiting
+80af3981a8b5: Layer already exists
+b6220bf6a5d8: Layer already exists
+44e884b23519: Layer already exists
+23aa89a8a424: Layer already exists
+91bd78b864ed: Layer already exists
+6c4c763d22d0: Layer already exists
+adb057d02f88: Layer already exists
+2b515d1b8b17: Pushed
+latest: digest: sha256:3a7d460b0341e72912171fe80ef6836e851cc2e73aa197157f91a3dfdab492c2 size: 1996
+🔄 Deploying container: msfget → host port 8001
+msfget
+9184794c9ae5fab132618f851609df39cbd62f849b4c8961b535b0e4a779ed0b
+✅ Done with [MSFGet]
+
+⏳ Processing [HelloWorld]
+🔗 Cloning HelloWorld
+Cloning into '/pipeline-runner/repos/HelloWorld'...
+🚧 Building image: websurfinmurf/helloworld:latest
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 144B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10-slim
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/3] FROM docker.io/library/python:3.10-slim
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 147B done
+#5 DONE 0.0s
+
+#6 [2/3] WORKDIR /app
+#6 CACHED
+
+#7 [3/3] COPY src/ .
+#7 CACHED
+
+#8 exporting to image
+#8 exporting layers done
+#8 writing image sha256:9612f79c5c8b6ddde809fe5906e46b5e59d977c998a49ab8b47664a911096ca6 done
+#8 naming to docker.io/websurfinmurf/helloworld:latest done
+#8 DONE 0.0s
+🔐 Logging into Docker Hub
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+📤 Pushing image
+The push refers to repository [docker.io/websurfinmurf/helloworld]
+80a7262ecbae: Preparing
+3377dcb38fb9: Preparing
+4bd3cc4c71de: Preparing
+4be1d3802eb7: Preparing
+21649572714d: Preparing
+6c4c763d22d0: Preparing
+6c4c763d22d0: Waiting
+3377dcb38fb9: Layer already exists
+4bd3cc4c71de: Layer already exists
+21649572714d: Layer already exists
+4be1d3802eb7: Layer already exists
+80a7262ecbae: Layer already exists
+6c4c763d22d0: Layer already exists
+latest: digest: sha256:79d08a05f2ff275b0d726218fc26f128a4daf96b0d0a3983619b10bc129c4b52 size: 1572
+🔄 Deploying container: helloworld → host port 8002
+helloworld
+cc5d27e226c3c600214676e237c6e9aa916b5563dbeab6901ccc6fec9d7ee61b
+✅ Done with [HelloWorld]
+
+===== Wed May 21 02:22:05 UTC 2025 Pipeline complete =====
