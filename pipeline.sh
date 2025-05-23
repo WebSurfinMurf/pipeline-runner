@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# It is sourced on startup, no need to load
+
 # 1) Load your secrets & tokens
-#if [[ -f "/home/websurfinmurf/pipeline.env" ]]; then
-#  # shellcheck disable=SC1090
-#  source "/home/websurfinmurf/pipeline.env"
-#else
-#  echo "ERROR: Cannot find /home/websurfinmurf/pipeline.env" >&2
-#  exit 1
-#fi
+if [[ -f "$HOME/pipeline.env" ]]; then
+  # shellcheck disable=SC1090
+  source "$HOME/pipeline.env"
+else
+  echo "ERROR: Cannot find $HOME/pipeline.env" >&2
+  exit 1
+fi
 
 # 2) Locate pipeline.conf next to this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,26 +23,29 @@ log() { echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $*"; }
 
 # 4) Process each line in pipeline.conf
 while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "$REPO_KEY" ]]; do
-  # skip blank lines or lines starting with '#'
+  # skip blank lines or comments
   [[ -z "$REPO_KEY" || "${REPO_KEY:0:1}" == "#" ]] && continue
 
   log "🔄 Processing project: $REPO_KEY"
 
-  # where to clone/pull each repo
   CLONE_DIR="$HOME/$REPO_KEY"
 
-  # 4a) Clone or update
+  # 4a) Clone or update, injecting GIT_TOKEN at runtime
   if [[ -d "$CLONE_DIR/.git" ]]; then
     log " Pulling latest for $REPO_KEY"
     cd "$CLONE_DIR"
     git pull origin "${BRANCH:-main}"
   else
-    log " Cloning $GIT_URL → $CLONE_DIR"
-    git clone "https://${GIT_TOKEN}@${GIT_URL#https://}" "$CLONE_DIR"
+    # strip off leading “https://”
+    HOST_AND_PATH="${GIT_URL#https://}"
+    # build a URL with the token
+    CLONE_URL="https://${GIT_TOKEN}@${HOST_AND_PATH}"
+    log " Cloning $CLONE_URL → $CLONE_DIR"
+    git clone "$CLONE_URL" "$CLONE_DIR"
     cd "$CLONE_DIR"
   fi
 
-  # 4b) Echo the README.md (if present)
+  # 4b) Echo the README.md
   if [[ -f "README.md" ]]; then
     log " —— Contents of README.md ——"
     sed 's/^/    /' README.md
