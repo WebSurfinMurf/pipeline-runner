@@ -2,11 +2,11 @@
 set -euo pipefail
 
 # 1) Load your secrets & tokens
-if [[ -f "$HOME/pipeline.env" ]]; then
+if [[ -f "/home/websurfinmurf/pipeline.env" ]]; then
   # shellcheck disable=SC1090
-  source "$HOME/pipeline.env"
+  source "/home/websurfinmurf/pipeline.env"
 else
-  echo "ERROR: Cannot find $HOME/pipeline.env" >&2
+  echo "ERROR: Cannot find /home/websurfinmurf/pipeline.env" >&2
   exit 1
 fi
 
