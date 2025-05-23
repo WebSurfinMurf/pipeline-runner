@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Load configuration
-source ./pipeline.conf
+set -euo pipefail
+
+# 1) Load secrets & variables from your home env file
+if [ -f "$HOME/pipeline.env" ]; then
+  # shellcheck disable=SC1090
+  source "$HOME/pipeline.env"
+else
+  echo "ERROR: Cannot find $HOME/pipeline.env; did you upload it?" >&2
+  exit 1
+fi
 
 # Simple logger
 log() {
