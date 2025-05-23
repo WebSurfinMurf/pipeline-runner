@@ -1,4 +1,4 @@
-
+#!/usr/bin/env bash
 
 cd /home/websurfinmurf/projects/pipeline-runner
 git pull origin main
