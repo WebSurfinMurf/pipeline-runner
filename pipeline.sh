@@ -1,73 +1,61 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LOG_FILE="$SCRIPT_DIR/pipeline.log"
+# Load configuration
+source ./pipeline.conf
 
-# Accept an optional target repo key; default is ALL
-TARGET="${1:-ALL}"
+# Simple logger
+log() {
+  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $*"
+}
 
-# Start logging
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-echo "===== $(date) Starting pipeline (target=$TARGET) ====="
-
-# Where repos will live
-WORK_BASE="$SCRIPT_DIR/repos"
-mkdir -p "$WORK_BASE"
-
-# Process each entry in pipeline.conf
-while IFS='|' read -r KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT; do
-  # Skip comments or blank lines
-  [[ -z "$KEY" || "${KEY:0:1}" == "#" ]] && continue
-
-  # If a specific target is set, skip others
-  if [[ "$TARGET" != "ALL" && "$TARGET" != "$KEY" ]]; then
-    echo "⏭ Skipping $KEY (target=$TARGET)"
-    continue
-  fi
-
-  echo
-  echo "⏳ Processing [$KEY]"
-
-  REPO_DIR="$WORK_BASE/$KEY"
-  if [[ ! -d "$REPO_DIR/.git" ]]; then
-    # First-time clone
-    echo "🔗 Cloning $KEY"
-    git clone "$(eval echo $GIT_URL)" "$REPO_DIR"
+# Iterate through each repo/service defined in pipeline.conf
+for SERVICE in "${SERVICES[@]}"; do
+  REPO_DIR="$WORK_DIR/$SERVICE"
+  
+  # 1) Clone or update
+  if [ -d "$REPO_DIR" ]; then
+    log "Updating ${SERVICE}..."
+    cd "$REPO_DIR"
+    git pull origin "$BRANCH"
   else
-    # Existing clone: pull updates
-    echo "🔄 Pulling latest for $KEY"
-    pushd "$REPO_DIR" >/dev/null
-    PULL_OUT=$(git pull --ff-only origin main 2>&1 || true)
-    popd >/dev/null
-
-    if echo "$PULL_OUT" | grep -q "Already up to date."; then
-      echo "↩️ $KEY is already up to date, skipping build/deploy"
-      continue
-    else
-      echo "✨ Updates detected in $KEY, proceeding to build"
-    fi
+    log "Cloning ${SERVICE}..."
+    git clone "https://github.com/${GITHUB_ORG}/${SERVICE}.git" "$REPO_DIR"
+    cd "$REPO_DIR"
   fi
 
-  # Build, push, and deploy
-  pushd "$REPO_DIR" >/dev/null
-  echo "🚧 Building image: $DOCKER_USER/$IMAGE_NAME:latest"
-  docker build -t "$DOCKER_USER/$IMAGE_NAME:latest" .
+  # ——— Echo whatever README.* (any case/ext) to the log ———
+  README_FILE=$(find . -maxdepth 1 -type f -iname 'readme.*' | head -n1 || true)
+  if [ -n "$README_FILE" ]; then
+    log "==== Contents of ${SERVICE}/${README_FILE} ===="
+    sed 's/^/    /' "$README_FILE"
+    log "==== End $README_FILE ===="
+  else
+    log "No README.* found for ${SERVICE}"
+  fi
 
-  echo "🔐 Logging into Docker Hub"
-  echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+  # 2) Build the Docker image (no cache to ensure freshness)
+  IMAGE="${DOCKERHUB_USER}/${SERVICE}:latest"
+  log "Building Docker image ${IMAGE}..."
+  docker build --no-cache \
+    --build-arg GITHUB_TOKEN="${GITHUB_TOKEN}" \
+    -t "${IMAGE}" .
 
-  echo "📤 Pushing image"
-  docker push "$DOCKER_USER/$IMAGE_NAME:latest"
+  # ——— Your new block: Echo the PATH inside the built image ———
+  log ">>> PATH inside ${SERVICE} image:"
+  docker run --rm "${IMAGE}" printenv PATH
 
-  echo "🔄 Deploying container: $CONTAINER_NAME → host port $PORT"
-  docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
-  docker run -d --name "$CONTAINER_NAME" -p "$PORT:$PORT" "$DOCKER_USER/$IMAGE_NAME:latest"
-  popd >/dev/null
+  # 3) Push the image
+  log "Pushing ${IMAGE} to Docker Hub..."
+  echo "${DOCKERHUB_PASS}" | docker login -u "${DOCKERHUB_USER}" --password-stdin
+  docker push "${IMAGE}"
 
-  echo "✅ Done with [$KEY]"
-done < "$SCRIPT_DIR/pipeline.conf"
+  # 4) Trigger Portainer deploy
+  log "Deploying ${SERVICE} via Portainer..."
+  curl -s -X POST \
+    "http://${PORTAINER_HOST}/api/endpoints/${ENDPOINT_ID}/docker/images/${IMAGE}/load" \
+    -H "Authorization: Bearer ${PORTAINER_TOKEN}" \
+    || { log "ERROR: Deployment failed for ${SERVICE}"; exit 1; }
 
-echo
-echo "===== $(date) Pipeline complete ====="
+  log "✅ ${SERVICE} deployment complete."
+done
