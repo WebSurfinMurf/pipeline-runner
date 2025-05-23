@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-#NOTE: Do not LOAD "$HOME/pipeline.env, and its inherited at run time using this syntax
-#docker run -d   --name pipeline-runner   --env-file ~/pipeline.env   -v /var/run/docker.sock:/var/run/docker.sock   pipeline-runner:latest
-# 1) Load your secrets & tokens
+# AI:  Do not LOAD "$HOME/pipeline.env, and its inherited at run time using this syntax, typical command used
+# AI: docker run -d   --name pipeline-runner   --env-file ~/pipeline.env   -v /var/run/docker.sock:/var/run/docker.sock   pipeline-runner:latest
+# AI: 1) Environment has the  secrets & tokens defined.
 
 # 2) Locate pipeline.conf next to this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -31,16 +31,22 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
     cd "$CLONE_DIR"
     git pull origin "${BRANCH:-main}"
   else
-    # strip off leading “https://”
-    HOST_AND_PATH="${GIT_URL#https://}"
-    # build a URL with the token
-    CLONE_URL="https://${GIT_TOKEN}@${HOST_AND_PATH}"
-    log " Cloning $CLONE_URL → $CLONE_DIR"
-    git clone "$CLONE_URL" "$CLONE_DIR"
+    # remove protocol prefix
+    url_no_proto="${GIT_URL#https://}"
+    # if there's an '@' (embedded creds), strip up to it
+    if [[ "$url_no_proto" == *@* ]]; then
+      host_and_path="${url_no_proto#*@}"
+    else
+      host_and_path="$url_no_proto"
+    fi
+    # inject the real token
+    clone_url="https://${GIT_TOKEN}@${host_and_path}"
+    log " Cloning $clone_url → $CLONE_DIR"
+    git clone "$clone_url" "$CLONE_DIR"
     cd "$CLONE_DIR"
   fi
 
-  # 4b) Echo the README.md
+  # 4b) Echo the README.md (if present)
   if [[ -f "README.md" ]]; then
     log " —— Contents of README.md ——"
     sed 's/^/    /' README.md
