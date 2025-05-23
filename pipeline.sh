@@ -1,14 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+#NOTE: Do not LOAD "$HOME/pipeline.env, and its inherited at run time using this syntax
+#docker run -d   --name pipeline-runner   --env-file ~/pipeline.env   -v /var/run/docker.sock:/var/run/docker.sock   pipeline-runner:latest
 # 1) Load your secrets & tokens
-if [[ -f "$HOME/pipeline.env" ]]; then
-  # shellcheck disable=SC1090
-  source "$HOME/pipeline.env"
-else
-  echo "ERROR: Cannot find $HOME/pipeline.env" >&2
-  exit 1
-fi
 
 # 2) Locate pipeline.conf next to this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
