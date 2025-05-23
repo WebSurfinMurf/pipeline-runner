@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
+# It is sourced on startup, no need to load
 # 1) Load your secrets & tokens
-if [[ -f "/home/websurfinmurf/pipeline.env" ]]; then
-  # shellcheck disable=SC1090
-  source "/home/websurfinmurf/pipeline.env"
-else
-  echo "ERROR: Cannot find /home/websurfinmurf/pipeline.env" >&2
-  exit 1
-fi
+#if [[ -f "/home/websurfinmurf/pipeline.env" ]]; then
+#  # shellcheck disable=SC1090
+#  source "/home/websurfinmurf/pipeline.env"
+#else
+#  echo "ERROR: Cannot find /home/websurfinmurf/pipeline.env" >&2
+#  exit 1
+#fi
 
 # 2) Locate pipeline.conf next to this script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
