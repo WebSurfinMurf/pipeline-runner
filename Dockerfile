@@ -2,7 +2,7 @@ FROM docker:24.0-cli
 RUN apk add --no-cache git bash
 
 # set this as the default inside-container cwd
-WORKDIR /pipeline-runner
+WORKDIR /pipeline-runner/repos/pipeline-runner
 
 # copy your entire repo here
 COPY . /pipeline-runner
