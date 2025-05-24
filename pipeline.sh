@@ -31,7 +31,7 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   [[ -z "$REPO_KEY" || "${REPO_KEY:0:1}" == "#" ]] && continue
 
   log "🔄 Processing project: $REPO_KEY"
-  CLONE_DIR="$HOME/$REPO_KEY"
+  CLONE_DIR="$HOME/repos/$REPO_KEY"
 
   ### 4a) Clone or pull (injecting $GIT_TOKEN at runtime) ###
   if [[ -d "$CLONE_DIR/.git" ]]; then
