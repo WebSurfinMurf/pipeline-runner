@@ -77,6 +77,7 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   docker run -d \
     --name "$CONTAINER_NAME" \
     -p "$PORT":"$PORT" \
+    -v /home/websurfinmurf/projects/"$REPO_KEY":/"$REPO_KEY"
     "$FULL_IMAGE"
 
   log "✅ $REPO_KEY done"
