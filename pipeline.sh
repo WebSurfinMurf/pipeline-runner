@@ -63,7 +63,7 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   ### 4c) Build the Docker image (no cache) ###
   FULL_IMAGE="${DOCKER_USER}/${IMAGE_NAME}:latest"
   log " Building Docker image $FULL_IMAGE"
-  docker build --no-cache \
+  docker build --no-cache --pull \
     --build-arg GIT_TOKEN="${GIT_TOKEN:-}" \
     -t "$FULL_IMAGE" .
 
