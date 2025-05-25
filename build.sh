@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -x
 cd /home/websurfinmurf/projects/pipeline-runner
 sleep 10
 docker stop pipeline-runner 2>/dev/null || true
