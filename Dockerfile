@@ -8,8 +8,9 @@ WORKDIR /pipeline-runner/repos/pipeline-runner
 COPY . /pipeline-runner
 
 RUN chmod +x pipeline.sh
-RUN addgroup -S runner && adduser  -S runner -G runner && chown -R runner:runner /pipeline-runner
+RUN addgroup -S appuser && adduser  -S appuser -G appuser && mkdir -p /app && chown -R appuser:appuser /app
+
 
 # 2) drop privileges for everything that follows
-USER runner
+USER appuser
 ENTRYPOINT ["bash","pipeline.sh"]
