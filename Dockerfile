@@ -9,4 +9,10 @@ COPY . /pipeline-runner
 
 RUN chmod +x pipeline.sh
 
+RUN addgroup -S runner \
+ && adduser  -S runner -G runner \
+ && chown -R runner:runner /pipeline-runner
+
+# 2) drop privileges for everything that follows
+USER runner
 ENTRYPOINT ["bash","pipeline.sh"]
