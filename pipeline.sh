@@ -10,6 +10,13 @@ set -euo pipefail
 # GIT_TOKEN is optional; if unset, clones will be unauthenticated
 BRANCH="${BRANCH:-main}"
 
++# bail if no project key was passed
+if [ $# -lt 1 ]; then
+  echo "ERROR: No project specified."
+  echo "Usage: $0 <project_key>"
+  exit 1
+fi
+
 ### 1) Locate and validate pipeline.conf ###
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONF_FILE="$SCRIPT_DIR/pipeline.conf"
