@@ -1,0 +1,5 @@
+# Env files & secrets
+pipeline.env
+
+# Misc
+*.log
