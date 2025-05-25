@@ -10,7 +10,7 @@ set -euo pipefail
 # GIT_TOKEN is optional; if unset, clones will be unauthenticated
 BRANCH="${BRANCH:-main}"
 
-+# bail if no project key was passed
+# bail if no project key was passed
 if [ $# -lt 1 ]; then
   echo "ERROR: No project specified."
   echo "Usage: $0 <project_key>"
