@@ -5,7 +5,7 @@ docker stop pipeline-runner 2>/dev/null || true
 docker rm   pipeline-runner 2>/dev/null || true
 git pull origin main
 #remove --force-rm if you want to see results of the build
-docker build --no-cache -t websurfinmurf/pipeline-runner:latest .
+docker build --force-rm --no-cache -t websurfinmurf/pipeline-runner:latest .
 docker push websurfinmurf/pipeline-runner:latest
 tail -2 pipeline.sh
 #sleep 10
