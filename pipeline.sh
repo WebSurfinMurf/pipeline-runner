@@ -97,12 +97,12 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   docker push "$FULL_IMAGE"
 
   ### 4e) Deploy via direct Docker (no Portainer) ###
+  #  --env-file /home/websurfinmurf/secrets/pipeline.env \
   log " Deploying container '$CONTAINER_NAME' on port $PORT"
   docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
   docker run -d \
     --name "$CONTAINER_NAME" \
     -p "$PORT":"$PORT" \
-    --env-file /home/websurfinmurf/secrets/pipeline.env \
     -v /home/websurfinmurf/projects/"$REPO_KEY":/"$REPO_KEY" \
     "$FULL_IMAGE" # Corrected a potential typo in your original volume mount, ensuring projectS with an S
 
