@@ -9,5 +9,6 @@ docker build --no-cache -t websurfinmurf/pipeline-runner:latest .
 docker push websurfinmurf/pipeline-runner:latest
 cat pipeline.sh
 sleep 10
+docker run --rm -it   --env-file ~/pipeline.env   --entrypoint bash   websurfinmurf/pipeline-runner:latest
 #docker run -d   --name pipeline-runner   --env-file /home/websurfinmurf/projects/secrets/pipeline.env  -v /home/websurfinmurf/projects/pipeline-runner:/pipeline-runner -v /var/run/docker.sock:/var/run/docker.sock   websurfinmurf/pipeline-runner:latest
 #docker container prune
