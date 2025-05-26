@@ -193,6 +193,16 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   # If the image is self-contained, this might not be needed.
   # DOCKER_RUN_OPTIONS+=("-v" "${PROJECT_CODE_DIR}:/app:ro") # Example: mount to /app read-only
 
+  # --- Add these for debugging ---
+  # To enable debugging, you'll pass these when you run build-deploy-project.sh
+  # For now, let's assume you might control this via an argument to build-deploy-project.sh later
+  # or simply uncomment these lines when you want to debug.
+  # For this example, we'll hardcode enabling debug for 'getstockdata.py'.
+  DOCKER_RUN_OPTIONS+=("-p" "127.0.0.1:5678:5678") # Map debug port to host's localhost ONLY
+  DOCKER_RUN_OPTIONS+=("-e" "ENABLE_PYTHON_DEBUG=true")
+  DOCKER_RUN_OPTIONS+=("-e" "DEBUG_TARGET_SCRIPT=getstockdata.py") # Or the script you want to debug
+  # --- End of debug additions ---
+
   log "Attempting to run container '$CONTAINER_NAME' with options: ${DOCKER_RUN_OPTIONS[*]}"
   docker run "${DOCKER_RUN_OPTIONS[@]}" "$FULL_IMAGE_NAME" || { log "ERROR: Failed to run container $CONTAINER_NAME."; exit 1; }
 
