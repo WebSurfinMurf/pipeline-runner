@@ -56,7 +56,7 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
 
   PROJECT_FOUND=true # Mark that we found and are processing the target project
   echo "🔄 Processing project: $REPO_KEY"
-  CLONE_DIR="$HOME/repos/$REPO_KEY"
+  CLONE_DIR="/projects/$REPO_KEY"
 
   ### 4a) Clone or pull (injecting $GIT_TOKEN at runtime) ###
   if [[ -d "$CLONE_DIR/.git" ]]; then
@@ -100,18 +100,16 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   echo "current"
   pwd
   ls -ltr
-  ls -ltr /home/websurfinmurf/projects
-  ls -ltr /pipeline-runner
   
   ### 4e) Deploy via direct Docker (no Portainer) ###
   #  --env-file /home/websurfinmurf/secrets/pipeline.env \
+  #   -v /projects/"$REPO_KEY":/"$REPO_KEY" \
   echo " Deploying container '$CONTAINER_NAME' on port $PORT"
   docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
   docker run -d \
     --name "$CONTAINER_NAME" \
-    --env-file /pipeline-runner/secrets/$REPO_KEY.env \
+    --env-file /projects/secrets/$REPO_KEY.env \
     -p "$PORT":"$PORT" \
-    -v /home/websurfinmurf/projects/"$REPO_KEY":/"$REPO_KEY" \
     "$FULL_IMAGE" # Corrected a potential typo in your original volume mount, ensuring projectS with an S
 
   echo "✅ $REPO_KEY done"
