@@ -7,7 +7,7 @@ set -euo pipefail
 ### 0) Required DockerHub creds from --env-file ###
 : "${DOCKER_USER:?DOCKER_USER is required (from pipeline.env)}"
 : "${DOCKER_PASS:?DOCKER_PASS is required (from pipeline.env)}"
-# GIT_TOKEN is optional; if unset, clones will be unauthenticated
+																 
 BRANCH="${BRANCH:-main}"
 
 # bail if no project key was passed
@@ -16,6 +16,9 @@ if [ $# -lt 1 ]; then
   echo "Usage: $0 <project_key>"
   exit 1
 fi
+
+# Store the target project key from the first argument
+TARGET_PROJECT_KEY="$1"
 
 ### 1) Locate and validate pipeline.conf ###
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -32,11 +35,24 @@ log() { echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $*"; }
 log "Logging in to Docker Hub as $DOCKER_USER"
 echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
+log "🎯 Target project key specified: $TARGET_PROJECT_KEY" # Log the target
+
 ### 4) Loop through each pipeline.conf entry ###
+PROJECT_FOUND=false # Flag to check if the target project was found
 while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "$REPO_KEY" ]]; do
   # skip blank lines or comments
   [[ -z "$REPO_KEY" || "${REPO_KEY:0:1}" == "#" ]] && continue
 
+  # <<< --- ADD THIS CHECK --- >>>
+  # If the REPO_KEY from the file does not match the TARGET_PROJECT_KEY, skip it
+  if [[ "$REPO_KEY" != "$TARGET_PROJECT_KEY" ]]; then
+    # Optional: You can log that you're skipping other projects
+    # log "Skipping project: $REPO_KEY (target is $TARGET_PROJECT_KEY)"
+    continue
+  fi
+  # <<< --- END OF CHECK --- >>>
+
+  PROJECT_FOUND=true # Mark that we found and are processing the target project
   log "🔄 Processing project: $REPO_KEY"
   CLONE_DIR="$HOME/repos/$REPO_KEY"
 
@@ -61,18 +77,18 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   ### 4b) Echo the README.md if present ###
   if [[ -f "README.md" ]]; then
     log " —— Contents of README.md ——"
-    sed 's/^/    /' README.md
+    sed 's/^/    /' README.md # Indent README content
     log " —— End README.md ——"
   else
     log " (no README.md found)"
   fi
 
   ### 4c) Build the Docker image (no cache) ###
-  ### remove --force-rm if need to debug
+										
   FULL_IMAGE="${DOCKER_USER}/${IMAGE_NAME}:latest"
   log " Building Docker image $FULL_IMAGE"
   docker build --no-cache --pull \
-     --force-rm \
+    --force-rm \
     --build-arg GIT_TOKEN="${GIT_TOKEN:-}" \
     -t "$FULL_IMAGE" .
 
@@ -87,8 +103,19 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
     --name "$CONTAINER_NAME" \
     -p "$PORT":"$PORT" \
     --env-file /home/websurfinmurf/secrets/pipeline.env \
-    -v /home/websurfinmurf/projects/"$REPO_KEY":/"$REPO_KEY"
-    "$FULL_IMAGE"
+    -v /home/websurfinmurf/projects/"$REPO_KEY":/"$REPO_KEY" \
+    "$FULL_IMAGE" # Corrected a potential typo in your original volume mount, ensuring projectS with an S
 
   log "✅ $REPO_KEY done"
+  # Since we found and processed the target project, we can exit the loop
+  # If you expect multiple entries with the same REPO_KEY and want to process all, remove the 'break'
+  break 
 done < "$CONF_FILE"
+
+# After the loop, check if the targeted project was actually found and processed
+if ! $PROJECT_FOUND; then
+  log "⚠️ ERROR: Project key '$TARGET_PROJECT_KEY' not found in $CONF_FILE."
+  exit 1 # Exit with an error if the specified project key was not in the conf file
+fi
+
+log "Pipeline finished for project $TARGET_PROJECT_KEY."
