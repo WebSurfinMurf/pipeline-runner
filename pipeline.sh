@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+echo "starting directory"
+pwd
 
 # AI:  Do not LOAD "$HOME/pipeline.env, and its inherited at run time using this syntax, typical command used
 # AI: docker run -d   --name pipeline-runner   --env-file ~/pipeline.env   -v /var/run/docker.sock:/var/run/docker.sock   pipeline-runner:latest
@@ -32,10 +34,10 @@ fi
 log() { echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] $*"; }
 
 ### 3) Log in to Docker once ###
-log "Logging in to Docker Hub as $DOCKER_USER"
+echo "Logging in to Docker Hub as $DOCKER_USER"
 echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-log "🎯 Target project key specified: $TARGET_PROJECT_KEY" # Log the target
+echo "🎯 Target project key specified: $TARGET_PROJECT_KEY" # Log the target
 
 ### 4) Loop through each pipeline.conf entry ###
 PROJECT_FOUND=false # Flag to check if the target project was found
@@ -53,47 +55,47 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   # <<< --- END OF CHECK --- >>>
 
   PROJECT_FOUND=true # Mark that we found and are processing the target project
-  log "🔄 Processing project: $REPO_KEY"
+  echo "🔄 Processing project: $REPO_KEY"
   CLONE_DIR="$HOME/repos/$REPO_KEY"
 
   ### 4a) Clone or pull (injecting $GIT_TOKEN at runtime) ###
   if [[ -d "$CLONE_DIR/.git" ]]; then
-    log " Pulling latest for $REPO_KEY (branch=$BRANCH)"
+    echo " Pulling latest for $REPO_KEY (branch=$BRANCH)"
     cd "$CLONE_DIR"
     git pull origin "$BRANCH"
   else
     host_and_path="${GIT_URL#https://}"
     if [[ -n "${GIT_TOKEN:-}" ]]; then
       CLONE_URL="https://${GIT_TOKEN}@${host_and_path}"
-      log " Cloning with token → $CLONE_URL"
+      echo " Cloning with token → $CLONE_URL"
     else
       CLONE_URL="$GIT_URL"
-      log " Cloning without auth → $CLONE_URL"
+      echo " Cloning without auth → $CLONE_URL"
     fi
     git clone "$CLONE_URL" "$CLONE_DIR"
     cd "$CLONE_DIR"
   fi
-
+  echo "CLONE_DIR $CLONE_DIR ,  GIT_URL $GIT_URL, BRANCH $BRANCH, CLONE_URL $CLONE_URL"
   ### 4b) Echo the README.md if present ###
   if [[ -f "README.md" ]]; then
-    log " —— Contents of README.md ——"
+    echo " —— Contents of README.md ——"
     sed 's/^/    /' README.md # Indent README content
-    log " —— End README.md ——"
+    echo " —— End README.md ——"
   else
-    log " (no README.md found)"
+    echo " (no README.md found)"
   fi
 
   ### 4c) Build the Docker image (no cache) ###
 										
   FULL_IMAGE="${DOCKER_USER}/${IMAGE_NAME}:latest"
-  log " Building Docker image $FULL_IMAGE"
+  echo " Building Docker image $FULL_IMAGE"
   docker build --no-cache --pull \
     --force-rm \
     --build-arg GIT_TOKEN="${GIT_TOKEN:-}" \
     -t "$FULL_IMAGE" .
 
   ### 4d) Push to Docker Hub ###
-  log " Pushing $FULL_IMAGE"
+  echo " Pushing $FULL_IMAGE"
   docker push "$FULL_IMAGE"
   echo "current"
   pwd
@@ -103,7 +105,7 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   
   ### 4e) Deploy via direct Docker (no Portainer) ###
   #  --env-file /home/websurfinmurf/secrets/pipeline.env \
-  log " Deploying container '$CONTAINER_NAME' on port $PORT"
+  echo " Deploying container '$CONTAINER_NAME' on port $PORT"
   docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
   docker run -d \
     --name "$CONTAINER_NAME" \
@@ -112,7 +114,7 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
     -v /home/websurfinmurf/projects/"$REPO_KEY":/"$REPO_KEY" \
     "$FULL_IMAGE" # Corrected a potential typo in your original volume mount, ensuring projectS with an S
 
-  log "✅ $REPO_KEY done"
+  echo "✅ $REPO_KEY done"
   # Since we found and processed the target project, we can exit the loop
   # If you expect multiple entries with the same REPO_KEY and want to process all, remove the 'break'
   break 
@@ -120,8 +122,8 @@ done < "$CONF_FILE"
 
 # After the loop, check if the targeted project was actually found and processed
 if ! $PROJECT_FOUND; then
-  log "⚠️ ERROR: Project key '$TARGET_PROJECT_KEY' not found in $CONF_FILE."
+  echo "⚠️ ERROR: Project key '$TARGET_PROJECT_KEY' not found in $CONF_FILE."
   exit 1 # Exit with an error if the specified project key was not in the conf file
 fi
 
-log "Pipeline finished for project $TARGET_PROJECT_KEY."
+echo "Pipeline finished for project $TARGET_PROJECT_KEY."
