@@ -109,6 +109,7 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   docker run -d \
     --name "$CONTAINER_NAME" \
     --env-file /projects/secrets/$REPO_KEY.env \
+    --user websurfinmurf:docker \
     -p "$PORT":"$PORT" \
     "$FULL_IMAGE" # Corrected a potential typo in your original volume mount, ensuring projectS with an S
 
