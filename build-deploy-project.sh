@@ -148,11 +148,12 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
     --build-arg IN_CONTAINER_USER_UID="${HOST_TARGET_USER_UID}" \
     --build-arg IN_CONTAINER_USER_PRIMARY_GID="${HOST_TARGET_USER_PRIMARY_GID}" \
     --build-arg IN_CONTAINER_DOCKER_SOCKET_GID="${HOST_DOCKER_SOCKET_GID}" \
-    -t "$FULL_IMAGE_NAME" "$PROJECT_CODE_DIR" || { log "ERROR: Docker build failed for $FULL_IMAGE_NAME."; continue; }
+    -t "$FULL_IMAGE_NAME" "$PROJECT_CODE_DIR" || { log "ERROR: Docker build failed for $FULL_IMAGE_NAME."; continue; } || { log "ERROR: Docker build failed for $FULL_IMAGE_NAME."; exit 1; } # Changed continue to exit 1
 
   ### 3. Push Docker Image ###
   log "Pushing image $FULL_IMAGE_NAME to Docker Hub..."
-  docker push "$FULL_IMAGE_NAME" || { log "ERROR: Docker push failed for $FULL_IMAGE_NAME."; continue; }
+  docker push "$FULL_IMAGE_NAME" || { log "ERROR: Docker push failed for $FULL_IMAGE_NAME."; continue; }  || { log "ERROR: Docker push failed for $FULL_IMAGE_NAME."; exit 1; } # Changed continue to exit 1
+# ...
 
   ### 4. Deploy Project Container ###
   log "Deploying container '$CONTAINER_NAME' from image $FULL_IMAGE_NAME..."
@@ -186,7 +187,7 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   # DOCKER_RUN_OPTIONS+=("-v" "${PROJECT_CODE_DIR}:/app:ro")
 
   log "Attempting to run container '$CONTAINER_NAME' with options: ${DOCKER_RUN_OPTIONS[*]}"
-  docker run "${DOCKER_RUN_OPTIONS[@]}" "$FULL_IMAGE_NAME" || { log "ERROR: Failed to run container $CONTAINER_NAME."; continue; }
+  docker run "${DOCKER_RUN_OPTIONS[@]}" "$FULL_IMAGE_NAME" || { log "ERROR: Failed to run container $CONTAINER_NAME."; continue; } || { log "ERROR: Failed to run container $CONTAINER_NAME."; exit 1; } # Changed continue to exit 1
 
   log "✅ Successfully deployed $REPO_KEY as container '$CONTAINER_NAME'."
   break # Exit loop after processing the target project
