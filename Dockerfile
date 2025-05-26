@@ -29,7 +29,7 @@ RUN adduser -S -u ${IN_CONTAINER_APPRUNNER_UID} -G apprunnerprimarygroup -h /hom
 WORKDIR /pipeline-runner
 
 # Copy application files and set ownership to the new 'apprunner' user and its primary group
-#COPY --chown=apprunner:apprunnerprimarygroup . .
+COPY --chown=apprunner:apprunnerprimarygroup . .
 # Alternatively, using UIDs:
 # COPY --chown=${IN_CONTAINER_APPRUNNER_UID}:${IN_CONTAINER_APPRUNNER_PRIMARY_GID} . .
 
