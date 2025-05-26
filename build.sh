@@ -55,6 +55,14 @@ docker run --rm websurfinmurf/pipeline-runner:latest su - apprunner -c "whoami &
 # Push the image (optional, if you use a registry)
 docker push websurfinmurf/pipeline-runner:latest
 
+
+# Prepare arguments for docker run.
+# If CONTAINER_ARG is set, it will be passed. Otherwise, nothing extra is passed.
+DOCKER_RUN_EXTRA_ARGS=()
+if [ -n "$CONTAINER_ARG" ]; then
+  DOCKER_RUN_EXTRA_ARGS+=("$CONTAINER_ARG")
+fi
+
 # Run the container
 # The --user apprunner flag is technically redundant if 'USER apprunner' is correctly
 # set as the last USER instruction in your Dockerfile, but it doesn't hurt.
@@ -64,6 +72,12 @@ docker run -d \
   --env-file /home/websurfinmurf/projects/secrets/pipeline.env \
   -v /home/websurfinmurf/projects:/projects \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  websurfinmurf/pipeline-runner:latest
+  websurfinmurf/pipeline-runner:latest \
+  "${DOCKER_RUN_EXTRA_ARGS[@]}" # This expands to the argument if present, or nothing if not.
 
-echo "Script finished. Check container status with 'docker ps -a | grep pipeline-runner' and logs with 'docker logs pipeline-runner'."
+if [ -n "$CONTAINER_ARG" ]; then
+  echo "Script finished. Started pipeline-runner with argument: $CONTAINER_ARG"
+else
+  echo "Script finished. Started pipeline-runner with no specific arguments."
+fi
+echo "Check container status with 'docker ps -a | grep pipeline-runner' and logs with 'docker logs pipeline-runner'."
