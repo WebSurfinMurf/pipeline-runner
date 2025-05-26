@@ -13,9 +13,6 @@ COPY . .
 # This now refers to /pipeline-runner/pipeline.sh because WORKDIR is /pipeline-runner
 RUN chmod +x pipeline.sh
 
-RUN mkdir -p /home/websurfinmurf/projects/secrets
-RUN ln -s /home/websurfinmurf/projects/secrets /pipeline-runner/secrets
-
 # Define the entrypoint to run your script.
 # This also refers to /pipeline-runner/pipeline.sh
 ENTRYPOINT ["bash", "pipeline.sh"]
