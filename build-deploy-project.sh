@@ -17,6 +17,10 @@ HOST_MAIN_PROJECTS_DIR="/home/${TARGET_HOST_USER}/projects"
 # Global pipeline environment file (expected to contain DOCKER_USER, DOCKER_PASS, GIT_TOKEN etc.)
 GLOBAL_PIPELINE_ENV_FILE="${HOST_MAIN_PROJECTS_DIR}/secrets/pipeline.env"
 
+# debug
+TARGET_PROJECT_KEY="$1"
+DEBUG_REQUESTED="${2:-}"
+
 # Source global .env file if it exists
 if [[ -f "$GLOBAL_PIPELINE_ENV_FILE" ]]; then
   log "Sourcing global environment from $GLOBAL_PIPELINE_ENV_FILE"
@@ -201,8 +205,21 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   DOCKER_RUN_OPTIONS+=("-p" "127.0.0.1:5678:5678") # Map debug port to host's localhost ONLY
   DOCKER_RUN_OPTIONS+=("-e" "ENABLE_PYTHON_DEBUG=true")
   DOCKER_RUN_OPTIONS+=("-e" "DEBUG_TARGET_SCRIPT=getstockdata.py") # Or the script you want to debug
+  
   # --- End of debug additions ---
+  DOCKER_RUN_OPTIONS=("-d" "--name" "$CONTAINER_NAME" "--restart" "unless-stopped")
+  DOCKER_RUN_OPTIONS+=(--user "${HOST_TARGET_USER_UID}:${HOST_TARGET_USER_PRIMARY_GID}")
+  # ... (other options: --env-file, -p for app port, -v docker.sock) ...
 
+  if [[ "$DEBUG_REQUESTED" == "--debug" || "$DEBUG_REQUESTED" == "-d" ]]; then
+    log "ENABLING REMOTE DEBUGGING for container '$CONTAINER_NAME'"
+    DOCKER_RUN_OPTIONS+=("-e" "ENABLE_REMOTE_DEBUG=true")
+    # You can specify which script to debug via DEBUG_TARGET_SCRIPT_PY
+    # If not specified, run_stockjobs.sh defaults to getstockdata.py
+    # DOCKER_RUN_OPTIONS+=("-e" "DEBUG_TARGET_SCRIPT_PY=getstockdata.py") 
+    DOCKER_RUN_OPTIONS+=("-p" "127.0.0.1:5678:5678") # Map debug port to host's localhost
+  fi
+  
   log "Attempting to run container '$CONTAINER_NAME' with options: ${DOCKER_RUN_OPTIONS[*]}"
   docker run "${DOCKER_RUN_OPTIONS[@]}" "$FULL_IMAGE_NAME" || { log "ERROR: Failed to run container $CONTAINER_NAME."; exit 1; }
 
