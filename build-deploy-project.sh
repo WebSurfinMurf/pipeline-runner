@@ -207,7 +207,7 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   DOCKER_RUN_OPTIONS+=("-e" "DEBUG_TARGET_SCRIPT=getstockdata.py") # Or the script you want to debug
   
   # --- End of debug additions ---
-  DOCKER_RUN_OPTIONS=("-d" "--name" "$CONTAINER_NAME" "--restart" "unless-stopped")
+  DOCKER_RUN_OPTIONS+=("-d" "--name" "$CONTAINER_NAME" "--restart" "unless-stopped")
   DOCKER_RUN_OPTIONS+=(--user "${HOST_TARGET_USER_UID}:${HOST_TARGET_USER_PRIMARY_GID}")
   # ... (other options: --env-file, -p for app port, -v docker.sock) ...
 
