@@ -100,8 +100,8 @@ fi
 ### --- Process Target Project from pipeline.conf --- ###
 PROJECT_FOUND=false
 # Read pipeline.conf line by line
-# Format expected: REPO_KEY|GIT_URL|IMAGE_NAME|CONTAINER_NAME|PORT
-while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "$REPO_KEY" ]]; do
+# Format expected: REPO_KEY|GIT_URL|IMAGE_NAME|CONTAINER_NAME|EPORT|IPORT
+while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME EPORT IPORT || [[ -n "$REPO_KEY" ]]; do
   # Skip blank lines or comments
   [[ -z "$REPO_KEY" || "${REPO_KEY:0:1}" == "#" ]] && continue
 
@@ -111,7 +111,7 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   fi
 
   PROJECT_FOUND=true
-  log "🔄 Processing project: $REPO_KEY (Image: ${DOCKER_USER}/${IMAGE_NAME}, Container: $CONTAINER_NAME, Port: $PORT)"
+  log "🔄 Processing project: $REPO_KEY (Image: ${DOCKER_USER}/${IMAGE_NAME}, Container: $CONTAINER_NAME, EPort: $EPORT, IPort: $IPORT)"
 
   # Define project-specific paths on the HOST system
   PROJECT_CODE_DIR="${HOST_MAIN_PROJECTS_DIR}/${REPO_KEY}"
@@ -183,9 +183,9 @@ while IFS='|' read -r REPO_KEY GIT_URL IMAGE_NAME CONTAINER_NAME PORT || [[ -n "
   fi
 
   # Port mapping from pipeline.conf
-  if [[ -n "$PORT" && "$PORT" != "N/A" && "$PORT" != "NONE" && "$PORT" != "" ]]; then # Ensure PORT is valid and not empty
-    log "Mapping port $PORT for container '$CONTAINER_NAME'"
-    DOCKER_RUN_OPTIONS+=("-p" "${PORT}:${PORT}") # Assumes internal and external port are the same
+  if [[ -n "$EPORT" && "$EPORT" != "N/A" && "$EPORT" != "NONE" && "$EPORT" != "" ]]; then # Ensure PORT is valid and not empty
+    log "Mapping port $EPORT for container '$CONTAINER_NAME'"
+    DOCKER_RUN_OPTIONS+=("-p" "${EPORT}:${IPORT}") # Map external to internal
   else
     log "No valid port mapping specified for container '$CONTAINER_NAME'."
   fi
